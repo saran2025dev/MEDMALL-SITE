@@ -4,10 +4,10 @@ import { Repository } from 'typeorm';
 import { CreatePartnerFormDto } from './dto/create-partner-form.dto';
 import { CreateContactFormDto } from './dto/create-contact-form.dto';
 import { CreateStudentFormDto } from './dto/create-student-form.dto';
-
 import { PartnerForm } from './entities/partner-form.entity';
 import { ContactForm } from './entities/contact-form.entity';
 import { StudentForm } from './entities/student-form.entity';
+import { MailService } from 'src/mailer/mail.service';
 
 @Injectable()
 export class FormSubmissionService {
@@ -20,11 +20,29 @@ export class FormSubmissionService {
 
     @InjectRepository(StudentForm)
     private readonly studentRepo: Repository<StudentForm>,
+
+    private readonly mailService: MailService,
   ) {}
 
-  // Create methods
-  createPartner(dto: CreatePartnerFormDto) {
-    return this.partnerRepo.save(dto);
+  async createPartner(dto: CreatePartnerFormDto) {
+    const partner = await this.partnerRepo.save(dto);
+
+    const subject = 'Partner Form Submission Received';
+    const html = `
+      <h3>New Partner Form Submission</h3>
+      <p><b>Full Name:</b> ${partner.fullName}</p>
+      <p><b>Email:</b> ${partner.email}</p>
+      <p><b>Phone:</b> ${partner.phone}</p>
+      <p>Thank you for submitting the partner form!</p>
+    `;
+
+    try {
+      await this.mailService.sendMail(partner.email, subject, html);
+    } catch (err) {
+      console.error('Failed to send mail', err);
+    }
+
+    return partner;
   }
 
   createContact(dto: CreateContactFormDto) {

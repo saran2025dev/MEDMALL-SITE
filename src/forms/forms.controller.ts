@@ -23,7 +23,7 @@ import { FormType } from 'src/utils/enums';
 @ApiTags('Forms')
 @Controller('forms')
 export class FormSubmissionController {
-  constructor(private readonly service: FormSubmissionService) {}
+  constructor(private readonly service: FormSubmissionService) { }
 
   // Partner Form
 
@@ -91,6 +91,131 @@ export class FormSubmissionController {
     await this.service.updatePartner(id, { photo: filename });
     return { message: 'Photo uploaded successfully', filename };
   }
+
+  @Post('partner-form/:id/upload-id-proof')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Upload ID proof file (jpg, jpeg, png, pdf, doc, docx, max 5MB)',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (_req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `idProof-${uniqueSuffix}${ext}`);
+        },
+      }),
+      fileFilter: (_req, file, callback) => {
+        if (
+          !file.mimetype.match(
+            /\/(jpg|jpeg|png|pdf|msword|vnd.openxmlformats-officedocument.wordprocessingml.document)$/
+          )
+        ) {
+          return callback(new Error('Only image/pdf/doc files are allowed!'), false);
+        }
+        callback(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
+    }),
+  )
+  async uploadIdProof(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const partner = await this.service.findPartnerById(id);
+    if (!partner) {
+      throw new NotFoundException('Partner form not found');
+    }
+    const filename = file.filename;
+    await this.service.updatePartner(id, { idProof: filename });
+    return { message: 'ID proof uploaded successfully', filename };
+  }
+
+  @Post('partner-form/:id/upload-qualification-doc')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Upload qualification doc file (jpg, jpeg, png, pdf, doc, docx, max 5MB)',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (_req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `qualificationDoc-${uniqueSuffix}${ext}`);
+        },
+      }),
+      fileFilter: (_req, file, callback) => {
+        if (
+          !file.mimetype.match(
+            /\/(jpg|jpeg|png|pdf|msword|vnd.openxmlformats-officedocument.wordprocessingml.document)$/
+          )
+        ) {
+          return callback(new Error('Only image/pdf/doc files are allowed!'), false);
+        }
+        callback(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
+    }),
+  )
+  async uploadQualificationDoc(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const partner = await this.service.findPartnerById(id);
+    if (!partner) {
+      throw new NotFoundException('Partner form not found');
+    }
+    const filename = file.filename;
+    await this.service.updatePartner(id, { qualificationDoc: filename });
+    return { message: 'Qualification doc uploaded successfully', filename };
+  }
+
+
+  @Get('partner-form/:id/id-proof')
+  @ApiOperation({ summary: 'Get partner ID proof file by partner ID' })
+  async getIdProof(@Param('id') id: string, @Res() res: Response) {
+    const partner = await this.service.findPartnerById(id);
+    if (!partner || !partner.idProof) {
+      throw new NotFoundException('ID proof not found for this partner');
+    }
+    const filePath = join(process.cwd(), 'uploads', partner.idProof);
+    return res.sendFile(filePath);
+  }
+
+  @Get('partner-form/:id/qualification-doc')
+  @ApiOperation({ summary: 'Get partner qualification doc file by partner ID' })
+  async getQualificationDoc(@Param('id') id: string, @Res() res: Response) {
+    const partner = await this.service.findPartnerById(id);
+    if (!partner || !partner.qualificationDoc) {
+      throw new NotFoundException('Qualification doc not found for this partner');
+    }
+    const filePath = join(process.cwd(), 'uploads', partner.qualificationDoc);
+    return res.sendFile(filePath);
+  }
+
+
 
   @Get('partner-form/:id/photo')
   @ApiOperation({ summary: 'Get partner photo by partner ID' })

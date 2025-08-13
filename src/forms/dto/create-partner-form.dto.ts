@@ -67,18 +67,18 @@ export class CreatePartnerFormDto {
  
   declaration: boolean;
 
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  idProof?: string;
+  // @ApiProperty({ required: false })
+  // @IsString()
+  // @IsOptional()
+  // idProof?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  qualificationDoc?: string;
+  // @ApiProperty({ required: false })
+  // @IsString()
+  // @IsOptional()
+  // qualificationDoc?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
-  @IsOptional()
-  photo?: string;
+  // @ApiProperty({ required: false })
+  // @IsString()
+  // @IsOptional()
+  // photo?: string;
 }
